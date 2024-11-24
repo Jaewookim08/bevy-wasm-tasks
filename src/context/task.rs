@@ -78,4 +78,25 @@ impl TaskContext {
         self.run_on_main_thread_with_config(runnable, Default::default())
             .await
     }
+
+    /// Dispatch a task without an output to the main Bevy thread.
+    pub fn dispatch_to_main_thread_with_config<Runnable>(
+        &self,
+        runnable: Runnable,
+        config: MainThreadRunConfiguration,
+    ) where
+        Runnable: FnOnce(MainThreadContext) -> () + Send + 'static,
+    {
+        self.task_channels
+            .submit(config.schedule, |ctx| runnable(ctx))
+            .expect("Failed to send operation to be run on main thread");
+    }
+
+    /// Dispatch a task without an output to the main Bevy thread.
+    pub fn dispatch_to_main_thread<Runnable>(&self, runnable: Runnable)
+    where
+        Runnable: FnOnce(MainThreadContext) -> () + Send + 'static,
+    {
+        self.dispatch_to_main_thread_with_config(runnable, Default::default())
+    }
 }
